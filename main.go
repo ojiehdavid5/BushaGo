@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 
+	handlers "BushaGo/handler"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"BushaGo/handler"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	app := fiber.New()
 
 	// Routes
+
 	app.Post("/recipient", handlers.CreateRecipientHandler)
 
 	log.Fatal(app.Listen(":3001"))
