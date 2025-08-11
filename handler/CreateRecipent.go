@@ -3,9 +3,10 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	 "fmt"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -42,9 +43,13 @@ func CreateRecipientHandler(c *fiber.Ctx) error {
 	}
 
 	// Busha API credentials — ideally load from .env
-	apiKey := "STV0ckQwSTZaeDpPQTJJODh5RkMwbDhPaVFTV1VMVzBjRWozTWljdkVqdDhkdUVicW10andQZzcwUGE="
-	profileID := "BUS_jlKUYwF9z1ynQZ98bWbaP"
-	apiVersion := "2025-07-11"
+	// apiKey := "STV0ckQwSTZaeDpPQTJJODh5RkMwbDhPaVFTV1VMVzBjRWozTWljdkVqdDhkdUVicW10andQZzcwUGE="
+	// profileID := "BUS_jlKUYwF9z1ynQZ98bWbaP"
+	// apiVersion := "2025-07-11"
+
+	apiKey := os.Getenv("BUSHA_API_KEY")
+	profileID := os.Getenv("BUSHA_PROFILE_ID")
+	apiVersion := os.Getenv("BUSHA_API_VERSION")
 
 	client := &http.Client{}
 
