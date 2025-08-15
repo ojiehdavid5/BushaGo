@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		
+
 		log.Fatal("Error loading .env file")
 	}
 
@@ -19,7 +19,8 @@ func main() {
 
 	// Routes
 
-	app.Post("/recipient", handlers.CreateRecipientHandler)
+	// app.Post("/recipient", handlers.CreateRecipientHandler)
+	app.Post("/transaction", handlers.CreateTransactionHandler)
 
 	log.Fatal(app.Listen(":3001"))
 }

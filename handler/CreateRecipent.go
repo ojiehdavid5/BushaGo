@@ -3,15 +3,14 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-
-	"github.com/gofiber/fiber/v2"
 )
 
-// Struct for incoming payload
+// Struct for creating a recipient
 type CreateRecipientPayload struct {
 	Currency      string `json:"currency"`
 	CountryCode   string `json:"country_code"`
@@ -34,39 +33,30 @@ type RecipientsResponse struct {
 	Data []Recipient `json:"data"`
 }
 
-func CreateRecipientHandler(c *fiber.Ctx) error {
-	var payload CreateRecipientPayload
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request payload",
-		})
-	}
-
-	// Busha API credentials — ideally load from .env
-	// apiKey := "STV0ckQwSTZaeDpPQTJJODh5RkMwbDhPaVFTV1VMVzBjRWozTWljdkVqdDhkdUVicW10andQZzcwUGE="
-	// profileID := "BUS_jlKUYwF9z1ynQZ98bWbaP"
-	// apiVersion := "2025-07-11"
-
+// CreateRecipient checks if a recipient exists; if not, creates one and returns its ID
+func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	apiKey := os.Getenv("BUSHA_API_KEY")
 	profileID := os.Getenv("BUSHA_PROFILE_ID")
 	apiVersion := os.Getenv("BUSHA_API_VERSION")
+
+	if apiKey == "" || profileID == "" || apiVersion == "" {
+		return "", errors.New("missing Busha API credentials in environment variables")
+	}
 
 	client := &http.Client{}
 
 	// Step 1 — Get all existing recipients
 	req, err := http.NewRequest("GET", "https://api.sandbox.busha.so/v1/recipients", nil)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	// fmt.Println(req)
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("X-BU-PROFILE-ID", profileID)
 	req.Header.Set("X-BU-VERSION", apiVersion)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
@@ -74,17 +64,14 @@ func CreateRecipientHandler(c *fiber.Ctx) error {
 
 	var recipientsList RecipientsResponse
 	if err := json.Unmarshal(body, &recipientsList); err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println(recipientsList)
 
 	// Step 2 — Check if recipient exists
 	for _, r := range recipientsList.Data {
 		if r.AccountNumber == payload.AccountNumber && r.BankName == payload.BankName {
-			return c.JSON(fiber.Map{
-				"message": "Recipient already exists",
-				"data":    r,
-			})
+			fmt.Println("Recipient already exists:", r.ID)
+			return r.ID, nil
 		}
 	}
 
@@ -93,7 +80,7 @@ func CreateRecipientHandler(c *fiber.Ctx) error {
 
 	createReq, err := http.NewRequest("POST", "https://api.sandbox.busha.so/v1/recipients", bytes.NewBuffer(createBody))
 	if err != nil {
-		return err
+		return "", err
 	}
 	createReq.Header.Set("Authorization", "Bearer "+apiKey)
 	createReq.Header.Set("X-BU-PROFILE-ID", profileID)
@@ -102,18 +89,20 @@ func CreateRecipientHandler(c *fiber.Ctx) error {
 
 	createResp, err := client.Do(createReq)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer createResp.Body.Close()
 
 	createRespBody, _ := io.ReadAll(createResp.Body)
 
 	if createResp.StatusCode != http.StatusCreated {
-		return c.Status(createResp.StatusCode).SendString(string(createRespBody))
+		return "", fmt.Errorf("failed to create recipient: %s", string(createRespBody))
 	}
 
-	var createdRecipient map[string]interface{}
-	json.Unmarshal(createRespBody, &createdRecipient)
+	var createdRecipient Recipient
+	if err := json.Unmarshal(createRespBody, &createdRecipient); err != nil {
+		return "", err
+	}
 
-	return c.Status(http.StatusCreated).JSON(createdRecipient)
+	return createdRecipient.ID, nil
 }
