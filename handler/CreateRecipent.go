@@ -33,6 +33,13 @@ type RecipientsResponse struct {
 	Data []Recipient `json:"data"`
 }
 
+// Struct for Busha create recipient API response
+type CreateRecipientResponse struct {
+	Status  string    `json:"status"`
+	Message string    `json:"message"`
+	Data    Recipient `json:"data"`
+}
+
 // CreateRecipient checks if a recipient exists; if not, creates one and returns its ID
 func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	apiKey := os.Getenv("BUSHA_API_KEY")
@@ -99,10 +106,16 @@ func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 		return "", fmt.Errorf("failed to create recipient: %s", string(createRespBody))
 	}
 
-	var createdRecipient Recipient
-	if err := json.Unmarshal(createRespBody, &createdRecipient); err != nil {
+	// Correctly unmarshal into CreateRecipientResponse
+	var createdRecipientResp CreateRecipientResponse
+	if err := json.Unmarshal(createRespBody, &createdRecipientResp); err != nil {
 		return "", err
 	}
 
-	return createdRecipient.ID, nil
+	if createdRecipientResp.Data.ID == "" {
+		return "", errors.New("recipient created but ID is empty in response")
+	}
+
+	fmt.Println("Recipient created successfully:", createdRecipientResp.Data.ID)
+	return createdRecipientResp.Data.ID, nil
 }
