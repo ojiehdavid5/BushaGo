@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	// "log"
 	"net/http"
 	"os"
 
@@ -75,18 +76,18 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 
 	fmt.Println("Recipient created with ID:", RecipientID)
 
-	fmt.Println("CreateTransactionHandler called")
 
 	// Step 2: Create quote
 	quotePayload := PayoutPayload{
-		SourceCurrency: "BTC",
+		SourceCurrency: "USDT",
 		TargetCurrency: "NGN",
-		SourceAmount:   10,
+		SourceAmount:  10,
 		PayIn:          PayMethod{Type: "balance"},
 		PayOut:         PayOutData{Type: "bank_transfer", RecipientID: RecipientID},
 	}
 
 	quoteBody, _ := json.Marshal(quotePayload)
+	fmt.Println(string(quoteBody))
 	req, err := http.NewRequest("POST", "https://api.sandbox.busha.so/v1/quotes", bytes.NewBuffer(quoteBody))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create quote request"})
@@ -107,7 +108,11 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send quote request"})
 	}
 	defer resp.Body.Close()
-	// fmt.Println(resp)
+	fmt.Println(resp)
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Failed to create quote: %v", err)
+	}
 
 	var quoteResp QuoteResponse
 	fmt.Println(quoteResp)

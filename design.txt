@@ -1,0 +1,58 @@
+// Chuks Exchange
+
+// API request to /exchange route
+
+{
+  "amount": 10 // crypto amount
+  "currency": "BTC", // ideally, this will be sent to your backend..
+  "account_details": {
+    "account_no": 1234567,
+    "account_name": "WHoever",
+    "bank": "God is Great Bank"
+  }
+}
+
+// Prepare a quote with the given data
+// First thing -> check if such account number exists in your database
+
+
+// k:v -> account no: recipient
+{
+  "1234567": "re1234567890xcvbnmkr67890"
+}
+
+{
+  "source_currency": "BTC",
+  "target_currency": "NGN",
+  "source_amount": 10,
+  "pay_in": {
+    "type": "balance"
+  },
+  "pay_out": {
+    "type": "bank_transfer",
+    "recipient_id": "recipient_id"
+  }
+}
+
+// FINISH?
+
+// Quote response -> Quote ID
+
+// Make a request to busha's /transfer route?
+
+{
+  "quote_id": "QUO_4657GB7"
+}
+
+// Transfer object?
+
+// Expected response
+
+{
+  "pay_in": {
+    "type": "address",
+    "network": "BTC",
+    "address": "bhscbuwycbwycg76cg7"
+  },
+  "amount": 10
+}
