@@ -8,21 +8,35 @@ import (
 )
 
 type RecipientRequest struct {
-    Amount         float64        `json:"amount"`
+    Amount         string        `json:"amount"`
     Currency       string         `json:"currency"`
     AccountDetails AccountDetails `json:"account_details"`
 }
 
 type AccountDetails struct {
-    AccountNo   int64  `json:"account_no"`
+    AccountNo   string  `json:"account_no"`
     AccountName string `json:"account_name"`
     Bank        string `json:"bank"`
 }
 
 type PayoutPayload struct{
+SourceCurrency string     `json:"source_currency"`
+    TargetCurrency string     `json:"target_currency"`
+    SourceAmount   float64    `json:"source_amount"`
+    PayIn          PayMethod  `json:"pay_in"`
+    PayOut         PayOutData `json:"pay_out"`
 
-	
 }
+
+type PayMethod struct {
+    Type string `json:"type"`
+}
+
+type PayOutData struct {
+    Type        string `json:"type"`
+    RecipientID string `json:"recipient_id"`
+} 
+
 func CreateTransactionHandler(c *fiber.Ctx) error {
 
 	var payload RecipientRequest
@@ -31,17 +45,18 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 			"error": "Invalid request payload",
 		})
 	}
-	fmt.Println(payload)
 
 	RecipientID, err := CreateRecipient(CreateRecipientPayload{
-		Currency:      payload.Currency,
+		Currency:      "NGN",
 		CountryCode:   "NG",
 		Type:          "bank",
 		BankName:      payload.AccountDetails.Bank,
-		BankCode:      "123",
-		AccountNumber: fmt.Sprintf("%d", payload.AccountDetails.AccountNo),
+		BankCode:      "100004",
+		AccountNumber:  payload.AccountDetails.AccountNo,
 		AccountName:   payload.AccountDetails.AccountName,
 	})
+
+	fmt.Println(err)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create recipient",
