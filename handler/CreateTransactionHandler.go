@@ -88,7 +88,7 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 	}
 
 	quoteBody, _ := json.Marshal(quotePayload)
-	fmt.Println(string(quoteBody))
+	fmt.Println(bytes.NewBuffer(quoteBody))
 
 	// Replace with your env variable
 	client := &http.Client{}
@@ -110,8 +110,8 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("X-BU-PROFILE-ID", profileID)
-	req.Header.Set("X-BU-VERSION", apiVersion)
+	// req.Header.Set("X-BU-PROFILE-ID", profileID)
+	// req.Header.Set("X-BU-VERSION", apiVersion)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -119,6 +119,7 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 				return  err
 
 	}
+	fmt.Println(resp)
 fmt.Println(err)
 	defer resp.Body.Close()
 
