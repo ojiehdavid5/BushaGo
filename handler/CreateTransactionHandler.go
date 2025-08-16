@@ -105,6 +105,7 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 
 		if apiKey == "" || profileID == "" || apiVersion == "" {
 		 fmt.Println("missing Busha API credentials in environment variables")
+
 	}
 
 
