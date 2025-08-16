@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+
 	// "log"
 	"net/http"
 	"os"
@@ -76,42 +78,53 @@ func CreateTransactionHandler(c *fiber.Ctx) error {
 
 	fmt.Println("Recipient created with ID:", RecipientID)
 
-
 	// Step 2: Create quote
 	quotePayload := PayoutPayload{
 		SourceCurrency: "USDT",
 		TargetCurrency: "NGN",
-		SourceAmount:  10,
+		SourceAmount:   10,
 		PayIn:          PayMethod{Type: "balance"},
 		PayOut:         PayOutData{Type: "bank_transfer", RecipientID: RecipientID},
 	}
 
 	quoteBody, _ := json.Marshal(quotePayload)
 	fmt.Println(string(quoteBody))
-	req, err := http.NewRequest("POST", "https://api.sandbox.busha.so/v1/quotes", bytes.NewBuffer(quoteBody))
+
+	// Replace with your env variable
+	client := &http.Client{}
+
+		req, err := http.NewRequest("POST", "https://api.sandbox.busha.so/v1/quotes", bytes.NewBuffer(quoteBody))
+
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create quote request"})
-	}
+	} 
+
 		apiKey := os.Getenv("BUSHA_API_KEY")
 	profileID := os.Getenv("BUSHA_PROFILE_ID")
 	apiVersion := os.Getenv("BUSHA_API_VERSION")
+
+		if apiKey == "" || profileID == "" || apiVersion == "" {
+		 fmt.Println("missing Busha API credentials in environment variables")
+	}
 
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("X-BU-PROFILE-ID", profileID)
 	req.Header.Set("X-BU-VERSION", apiVersion)
- // Replace with your env variable
-	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send quote request"})
+		// return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send quote request"})
+				return  err
+
 	}
+fmt.Println(err)
 	defer resp.Body.Close()
-	fmt.Println(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Failed to create quote: %v", err)
+		body, _ := io.ReadAll(resp.Body)
+		return c.Status(resp.StatusCode).SendString(string(body))
 	}
 
 	var quoteResp QuoteResponse
