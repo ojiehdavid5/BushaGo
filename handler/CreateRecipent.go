@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-// Struct for creating a recipient
+// CreateRecipientPayload represents the payload for creating a recipient.
 type CreateRecipientPayload struct {
 	Currency      string `json:"currency"`
 	CountryCode   string `json:"country_code"`
@@ -21,7 +21,7 @@ type CreateRecipientPayload struct {
 	AccountName   string `json:"account_name"`
 }
 
-// Struct for Busha recipients response
+// Recipient represents a Busha recipient.
 type Recipient struct {
 	ID            string `json:"id"`
 	AccountNumber string `json:"account_number"`
@@ -29,18 +29,19 @@ type Recipient struct {
 	BankName      string `json:"bank_name"`
 }
 
+// RecipientsResponse is the response structure for listing recipients.
 type RecipientsResponse struct {
 	Data []Recipient `json:"data"`
 }
 
-// Struct for Busha create recipient API response
+// CreateRecipientResponse is the response structure for creating a recipient.
 type CreateRecipientResponse struct {
 	Status  string    `json:"status"`
 	Message string    `json:"message"`
 	Data    Recipient `json:"data"`
 }
 
-// CreateRecipient checks if a recipient exists; if not, creates one and returns its ID
+// CreateRecipient checks if a recipient exists; if not, creates one and returns its ID.
 func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	apiKey := os.Getenv("BUSHA_API_KEY")
 	profileID := os.Getenv("BUSHA_PROFILE_ID")
@@ -67,7 +68,10 @@ func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
 
 	var recipientsList RecipientsResponse
 	if err := json.Unmarshal(body, &recipientsList); err != nil {
@@ -83,7 +87,10 @@ func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	}
 
 	// Step 3 — Create recipient if not found
-	createBody, _ := json.Marshal(payload)
+	createBody, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
 
 	createReq, err := http.NewRequest("POST", "https://api.sandbox.busha.so/v1/recipients", bytes.NewBuffer(createBody))
 	if err != nil {
@@ -100,13 +107,16 @@ func CreateRecipient(payload CreateRecipientPayload) (string, error) {
 	}
 	defer createResp.Body.Close()
 
-	createRespBody, _ := io.ReadAll(createResp.Body)
+	createRespBody, err := io.ReadAll(createResp.Body)
+	if err != nil {
+		return "", err
+	}
 
 	if createResp.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("failed to create recipient: %s", string(createRespBody))
 	}
 
-	// Correctly unmarshal into CreateRecipientResponse
+	// Unmarshal create recipient response
 	var createdRecipientResp CreateRecipientResponse
 	if err := json.Unmarshal(createRespBody, &createdRecipientResp); err != nil {
 		return "", err
