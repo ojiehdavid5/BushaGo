@@ -18,6 +18,8 @@ type RecipientRequest struct {
 	AccountDetails AccountDetails `json:"account_details"`
 }
 
+
+
 // AccountDetails holds bank account details for payouts.
 type AccountDetails struct {
 	AccountNo   string `json:"account_no"`
